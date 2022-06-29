@@ -1,8 +1,8 @@
 import { getAuth } from "firebase/auth";
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
-
 import "firebase/compat/database";
+import { getStorage } from "firebase/storage";
 const firebaseConfig = firebase.initializeApp({
   apiKey: " AIzaSyAswgHbH4UHlR7u2scfjlrDx-VBL4eCfsk",
   authDomain: "social-media-app-a1cb2.firebaseapp.com",
@@ -14,3 +14,4 @@ const firebaseConfig = firebase.initializeApp({
 
 export const db = firebaseConfig.firestore();
 export const auth = getAuth();
+export const storage = getStorage();

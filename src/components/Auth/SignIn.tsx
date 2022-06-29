@@ -1,7 +1,9 @@
 import { css } from "@emotion/css";
 import { SyntheticEvent, useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../../App";
+import { AuthContext } from "../Context/AuthContext";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../data/firebaseConfig";
 
 const signInContainer = css`
   text-align: center;
@@ -19,7 +21,7 @@ const signInContainer = css`
   }
 `;
 export const SignIn = () => {
-  const [email, setEmail] = useState<string>("");
+  const { email, setEmail } = useContext(AuthContext);
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
   const { signIn } = useContext(AuthContext);
@@ -35,10 +37,11 @@ export const SignIn = () => {
       setError("fail");
     }
   };
+
   return (
     <div className={signInContainer}>
       <h2>Sign in</h2>
-
+      {error && <p>Prijava nije uspijela</p>}
       <form onSubmit={handleSubmit}>
         <input
           type="email"
@@ -58,6 +61,9 @@ export const SignIn = () => {
       </form>
       <div>
         Don't have an account? <Link to="/signup">Sign up</Link>
+      </div>
+      <div>
+        <Link to="/passwordReset">Forgot Password?</Link>
       </div>
     </div>
   );

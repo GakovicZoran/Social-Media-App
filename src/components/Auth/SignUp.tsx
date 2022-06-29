@@ -1,7 +1,8 @@
 import { css } from "@emotion/css";
-import { useContext, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../../App";
+import { AuthContext } from "../Context/AuthContext";
+import { AddBio } from "./AddBio";
 
 const signUpContainer = css`
   text-align: center;
@@ -20,58 +21,68 @@ const signUpContainer = css`
 `;
 
 export const SignUp = () => {
-  const [email, setEmail] = useState<string>("");
+  const { createUser, setName, setEmail, email } = useContext(AuthContext);
   const [password, setPassword] = useState<string>("");
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const passwordConfirmRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string>("");
-  const { createUser } = useContext(AuthContext);
+  const [showForm, setShowForm] = useState<boolean>(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    if (passwordRef?.current?.value !== passwordConfirmRef?.current?.value) {
+      return setError("Passwords do not match");
+    }
+
     setError("");
+    //Kasnije dodaj error state i to globalno da ne bude za svaki catch posebno.
     try {
       await createUser(email, password);
-      navigate("/home");
     } catch {
       setError("fail");
     }
+
+    navigate("/home");
   };
+
+  const handleShowForm = () => {
+    setShowForm(!showForm);
+  };
+
   return (
     <div className={signUpContainer}>
       <h2>Sign up</h2>
-      {error && <p>Nista</p>}
+      {error && <p>{error}</p>}
       <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Name *"
+        ></input>
         <input
           onChange={(e) => setEmail(e.target.value)}
           type="email"
           placeholder="Email Address *"
-          id="email"
         ></input>
 
         <input
           onChange={(e) => setPassword(e.target.value)}
           type="password"
           placeholder="Password *"
-          id="password"
+          ref={passwordRef}
         ></input>
 
         <input
           type="password"
           placeholder="Confirm password *"
-          id="confirm-password"
+          ref={passwordConfirmRef}
         ></input>
 
-        {/* <span>
-          Male <input type="checkbox"></input>
-        </span>
-
-        <span>
-          Female
-          <input type="checkbox"></input>
-        </span> */}
-
+        {showForm && <AddBio />}
         <button>Sign up</button>
       </form>
+      <button onClick={handleShowForm}> ADD BIO</button>
       <div>
         Already have an account? <Link to="/">Sign in</Link>
       </div>

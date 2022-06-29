@@ -1,14 +1,15 @@
 import { useContext, useState } from "react";
-import { db } from "../data/firebaseConfig";
+import { db, auth } from "../../../data/firebaseConfig";
 import firebase from "firebase/compat/app";
-import { getAuth } from "firebase/auth";
 import { css } from "@emotion/css";
-import { AuthContext } from "../../App";
+import { AuthContext } from "../../../Context/AuthContext";
 import { IoSendSharp } from "react-icons/io5";
+import { useParams } from "react-router-dom";
+import { addDoc, collection, doc } from "firebase/firestore";
 
 const sendMsg = css`
   height: 40px;
-  width: 300px;
+  width: 27.8%;
   border: 1px solid #263238;
   display: flex;
   position: absolute;
@@ -16,6 +17,7 @@ const sendMsg = css`
 
 const inputStyle = css`
   height: 100%;
+  width: 207%;
   flex: 85%;
   border: 0;
   padding: 0 0.7em;
@@ -26,6 +28,9 @@ const inputStyle = css`
 `;
 
 const btnStyle = css`
+  position: absolute;
+  top: 0;
+  right: 0;
   border: 0;
   display: grid;
   place-items: center;
@@ -34,7 +39,7 @@ const btnStyle = css`
   height: 100%;
   background: transparent;
   outline: none;
-  font-size: 20px;
+  font-size: 25px;
   color: lightgray;
   &:hover {
     color: #00ffbf;
@@ -47,7 +52,10 @@ interface IAppProps {
 
 export const SendMessage = ({ scroll }: IAppProps) => {
   const [msg, setMsg] = useState<string>("");
-  const { user } = useContext(AuthContext);
+  const { userInfo, user } = useContext(AuthContext);
+  const { id } = useParams();
+  // console.log(id);
+
   const handlerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMsg(e.target.value);
   };
@@ -56,13 +64,15 @@ export const SendMessage = ({ scroll }: IAppProps) => {
     e.preventDefault();
     if (msg === "") return;
 
-    const { uid, photoURL } = user;
     try {
-      await db.collection("messages").add({
+      // await db.collection("messages").add({});
+      const docRef = doc(db, "users", `${auth?.currentUser?.uid}`);
+      const colRef = collection(docRef, "messages");
+      addDoc(colRef, {
         text: msg,
-        photoURL,
-        uid,
         name: user.displayName,
+        photoURL: user.photoURL,
+        uid: user.uid,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     } catch (err) {
@@ -81,10 +91,10 @@ export const SendMessage = ({ scroll }: IAppProps) => {
           onChange={handlerChange}
           placeholder="Type something..."
         ></input>
+        <button className={btnStyle} type="submit">
+          <IoSendSharp />
+        </button>
       </form>
-      <button className={btnStyle} type="submit">
-        <IoSendSharp />
-      </button>
     </div>
   );
 };

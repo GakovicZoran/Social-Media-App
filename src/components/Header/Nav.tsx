@@ -1,7 +1,7 @@
 import { css } from "@emotion/css";
 import { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../../App";
+import { AuthContext } from "../Context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHome,
@@ -9,6 +9,7 @@ import {
   faUser,
   faArrowRightFromBracket,
 } from "@fortawesome/free-solid-svg-icons";
+
 const navContainer = css`
   & ul {
     display: flex;
@@ -27,7 +28,7 @@ const navBarIcons = css`
   font-size: 27px;
 `;
 export const Nav = () => {
-  const { logOut, user } = useContext(AuthContext);
+  const { logOut, user, userInfo } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogOut = async () => {
@@ -46,6 +47,9 @@ export const Nav = () => {
     <div className={navContainer}>
       <nav>
         <ul>
+          <li>
+            <Link to="/chat">CHAT</Link>
+          </li>
           <li>
             <Link to="/home">
               <FontAwesomeIcon icon={faHome} className={navBarIcons} />

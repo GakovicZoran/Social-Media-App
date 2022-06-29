@@ -1,18 +1,20 @@
 import { useState, useEffect, useRef, useContext } from "react";
-// import { db } from "./Helpers/firebaseConfig";
-import { SendMessage } from "./SendMessage";
-import { getAuth } from "firebase/auth";
+import { auth, db } from "../../../data/firebaseConfig";
+import { SendMessage } from "../Chat/SendMessage";
 import { css } from "@emotion/css";
-// import Timestamp from "react-timestamp";
-import { db } from "../data/firebaseConfig";
-import { AuthContext } from "../../App";
+import { AuthContext } from "../../../Context/AuthContext";
+import { IMesProp, IUser } from "../../../Interfaces/Interfaces";
+import { Timestamp } from "firebase/firestore";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ActiveUsers } from "./ActiveUsers";
 
 const chatBox = css`
-  width: 300px;
-  height: auto;
+  width: 50%;
+  // height: auto;
 `;
 
 const chatMsgs = css`
+  display: flex;
   width: 100%;
   height: 90%;
   overflow-y: scroll;
@@ -27,7 +29,6 @@ const header = css`
   justify-content: space-around;
   align-items: center;
   height: 45px;
-  border-radius: 6px;
   background: #263238;
 `;
 
@@ -96,26 +97,29 @@ const userName = css`
   color: #263238;
 `;
 
-interface IMesProp {
-  createdAt?: any;
-  name?: string;
-  photoURL?: string;
-  text?: string;
-  uid?: string;
-}
+const msgsBox = css`
+  display: flex;
+  flex-direction: column;
+  width: 70%;
+`;
 export const Chat = () => {
-  const [messages, setMessages] = useState<IMesProp[]>([]);
   const scroll = useRef<HTMLInputElement>(null);
-  const { user } = useContext(AuthContext);
-
+  const { user, userInfo, messages, setMessages } = useContext(AuthContext);
+  const { id } = useParams();
+  // console.log(id);
+  // UGLAVNOM MORAO BIH IMATI NEKAKAV REALTIME UPDATE U BAZI, TO VEC IMAM U KOLEKCIJI TAKO DA STA CE MI I U BAZI HMM
   useEffect(() => {
-    db.collection("messages")
+    db.collection(`/users/${auth?.currentUser?.uid}/messages`)
       .orderBy("createdAt")
       .limit(50)
       .onSnapshot((snapshot) => {
-        setMessages(snapshot.docs.map((doc) => doc.data()));
+        setMessages(snapshot.docs.map((doc: any) => doc.data()));
       });
   }, []);
+
+  console.log(messages);
+
+  console.log(userInfo);
 
   return (
     <div className={chatBox}>
@@ -123,22 +127,28 @@ export const Chat = () => {
         <p className={headerTitle}>Live chat</p>
       </div>
       <div ref={scroll} className={chatMsgs}>
-        {messages.map(({ createdAt, text, photoURL, uid, name }: IMesProp) => (
-          <div
-            key={Math.random() * 1000}
-            // className={`
-            //     ${msg} ${uid === user.uid ? sent : received}
-            //   `}
-          >
-            {/* <Timestamp className={timestamp} date={createdAt?.toDate()} /> */}
-            <p className={userName}>{name}</p>
-            {/* className={imgAndMsg(uid === user.uid)} */}
-            <div>
-              <img className={img} src={photoURL} alt="Loading..." />
-              <p className={userText}>{text}</p>
-            </div>
-          </div>
-        ))}
+        <ActiveUsers />
+        <div className={msgsBox}>
+          {messages
+            .filter((users: any) => users.id !== user.uid)
+            .map(({ createdAt, text, photoURL, uid, name }: IMesProp) => (
+              <div
+                key={Math.random() * 1000}
+                className={`
+               ${msg} ${uid === auth?.currentUser?.uid ? sent : received}
+               
+             `}
+              >
+                {/* <Timestamp className={timestamp} date={createdAt?.toDate()} /> */}
+
+                <p className={userName}>{name}</p>
+                <div className={imgAndMsg(uid === auth?.currentUser?.uid)}>
+                  <img className={img} src={photoURL} alt="Loading..." />
+                  <p className={userText}>{text}</p>
+                </div>
+              </div>
+            ))}
+        </div>
       </div>
       <SendMessage scroll={scroll} />
     </div>

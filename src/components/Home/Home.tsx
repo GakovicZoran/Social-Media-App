@@ -1,18 +1,16 @@
 import { css } from "@emotion/css";
-import { useContext } from "react";
-import { AuthContext } from "../../App";
-import { Chat } from "../Body/Chat";
+
+import { Chat } from "../Body/Profile/Chat/Chat";
 import { Post } from "../Body/Post";
 import { User } from "../Body/User";
+import { Route, Routes } from "react-router-dom";
 
 const homeContainer = css`
   display: flex;
   justify-content: space-between;
-  height: 100vh;
+  height: 93.5vh;
 `;
 export const Home = () => {
-  const { user } = useContext(AuthContext);
-
   return (
     <div className={homeContainer}>
       <Chat />
