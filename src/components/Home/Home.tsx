@@ -1,9 +1,7 @@
 import { css } from "@emotion/css";
-
-import { Chat } from "../Body/Profile/Chat/Chat";
-import { Post } from "../Body/Post";
-import { User } from "../Body/User";
-import { Route, Routes } from "react-router-dom";
+import { Chat } from "../Body/Chat/Chat";
+import { Post } from "../Body/Posts/Post";
+import { User } from "../Body/Posts/User";
 
 const homeContainer = css`
   display: flex;

@@ -1,21 +1,19 @@
 import { css } from "@emotion/css";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../../Context/AuthContext";
-import { Post } from "../Post";
+import { Post } from "../Posts/Post";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCamera } from "@fortawesome/free-solid-svg-icons";
-import { auth, storage } from "../../data/firebaseConfig";
-import { ref, uploadBytes, listAll, getDownloadURL } from "firebase/storage";
-import { About } from "./About";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { About } from "./AboutUser/About";
 import { updateProfile } from "firebase/auth";
-import { IUser } from "../../Interfaces/Interfaces";
+import { ICurrentUser, IFile, IUser } from "../../Interfaces/Interfaces";
 import { useParams } from "react-router-dom";
-import { setDoc, doc, addDoc } from "firebase/firestore";
-import { db } from "../../data/firebaseConfig";
+import { db, auth, storage } from "../../data/firebaseConfig";
+import { Followers } from "./Followers";
 
 const bannerBox = css`
   position: relative;
-  }
 `;
 
 const bannerImg = css`
@@ -24,7 +22,7 @@ const bannerImg = css`
 `;
 
 const bannerImgBox = css`
-  height: 30vh;
+  height: 50vh;
   overflow: hidden;
 `;
 
@@ -56,6 +54,12 @@ const profileImg = css`
   object-fit: cover;
 `;
 
+const profileUserName = css`
+  font-size: 20px;
+  color: white;
+  margin-left: 20px;
+`;
+
 const userInfoBox = css`
   display: flex;
   justify-content: center;
@@ -66,15 +70,15 @@ const infoBox = css`
   height: 95vh;
 `;
 
-const post = css`
+const profilePost = css`
   overflow-y: scroll;
   overflow-x: hidden;
   height: 95vh;
+  width: 1000px;
 `;
 
 const addProfilePhoto = css`
   position: absolute;
-  left: 0px;
   top: 178px;
   width: 180px;
   height: 30px;
@@ -85,37 +89,84 @@ const addProfilePhoto = css`
 
   & button {
     background-color: transparent;
-    padding-left: 42%;
     border: none;
     font-size: 20px;
     cursor: pointer;
   }
 
-  // input[type="file"] {
-  //   // opacity: 0;
-  //   position: absolute;
-  //   top: 0;
-  //   left: 0;
-  //   right: 0;
-  //   bottom: 0;
-  //   cursor: pointer;
-  // }
+  input[type="file"] {
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    cursor: pointer;
+  }
+`;
+
+const profileImgIcon = css`
+  margin-left: 73px;
+`;
+const addCoverPhoto = css`
+  position: absolute;
+  right: 30px;
+  top: 50px;
+  width: 180px;
+  height: 30px;
+  background-color: lightgray;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+
+  & button {
+    background-color: transparent;
+    padding: 0 45%;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+  }
+`;
+
+const profileNav = css`
+  text-align: center;
+
+  & button {
+    border: none;
+    padding: 20px;
+    font-size: 20px;
+    border: 1px dotted black;
+    cursor: pointer;
+  }
+
+  & button:hover {
+    color: #007bff;
+  }
 `;
 
 export const Profile = () => {
-  const { user, userInfo } = useContext(AuthContext);
   const [postRender, setPostRender] = useState<boolean>(true);
   const [followersRender, setFollowersRender] = useState<boolean>(false);
   const [followingRender, setFollowingRender] = useState<boolean>(false);
   const [aboutRender, setAboutRender] = useState<boolean>(false);
-  const [image, setImage] = useState<any>(null);
+  const [profileImage, setProfileImage] = useState<IFile | null>(null);
+  const [coverImage, setCoverImage] = useState<IFile | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const { user, userInfo } = useContext(AuthContext);
   const { id } = useParams();
 
-  const upload = async (file: any, currentUser: any, setLoading: any) => {
-    const imageRef = ref(storage, currentUser.uid + ".png");
+  // Profile Image //
+  const uploadProfileImg = async (
+    file: IFile,
+    currentUser: ICurrentUser,
+    setLoading: React.Dispatch<React.SetStateAction<boolean>>
+  ) => {
     setLoading(true);
-    await uploadBytes(imageRef, file);
+    const imageRef = ref(storage, currentUser?.uid + ".png");
+    await uploadBytes(
+      imageRef,
+      file as unknown as Blob | Uint8Array | ArrayBuffer
+    );
     const photoURL = await getDownloadURL(imageRef);
 
     if (auth.currentUser) {
@@ -133,24 +184,95 @@ export const Profile = () => {
 
   const handleImageChange = (e: any) => {
     if (e.target.files[0]) {
-      setImage(e.target.files[0]);
+      setProfileImage(e.target.files[0]);
     }
   };
 
   const handleUploadProfileImage = () => {
-    upload(image, auth.currentUser, setLoading);
+    uploadProfileImg(
+      profileImage as IFile,
+      auth.currentUser as unknown as ICurrentUser,
+      setLoading
+    );
+    setProfileImage(null);
+  };
+
+  useEffect(() => {
+    if (profileImage) return handleUploadProfileImage();
+  }, [profileImage]);
+
+  // Cover Image //
+  const uploadCoverImg = async (
+    file: IFile,
+    currentUser: ICurrentUser,
+    setLoading: React.Dispatch<React.SetStateAction<boolean>>
+  ) => {
+    const coverImageRef = ref(
+      storage,
+      `coverImage/${currentUser?.uid}` + ".png"
+    );
+    setLoading(true);
+    await uploadBytes(
+      coverImageRef,
+      file as unknown as Blob | Uint8Array | ArrayBuffer
+    );
+    const photoCoverURL = await getDownloadURL(coverImageRef);
+
+    if (auth.currentUser) {
+      await db.collection("users").doc(`${auth.currentUser.uid}`).update({
+        userCoverPhoto: photoCoverURL,
+      });
+    }
+
+    setLoading(false);
+    alert("Uploaded Cover Image!");
+  };
+
+  const handleCoverImageChange = (e: any) => {
+    if (e.target.files[0]) {
+      setCoverImage(e.target.files[0]);
+    }
+  };
+
+  const handleUploadCoverImage = () => {
+    uploadCoverImg(
+      coverImage as IFile,
+      auth.currentUser as unknown as ICurrentUser,
+      setLoading
+    );
+    setCoverImage(null);
   };
 
   return (
     <div>
       <div className={bannerBox}>
-        <div className={bannerImgBox}>
-          <img
-            className={bannerImg}
-            src="https://image-assets.eu-2.volcanic.cloud/api/v1/assets/images/e6f2674da83a9d0ae9667986941853b5?t=1643249086&webp_fallback=png"
-            alt="Banner Loading.."
-          />
-        </div>
+        {userInfo
+          .filter((users: IUser) => users.id === id)
+          .map((eachUser: IUser) => {
+            return (
+              <div key={eachUser.id} className={bannerImgBox}>
+                <img
+                  className={bannerImg}
+                  src={`${eachUser.userCoverPhoto}?${new Date().getTime()}`}
+                  alt="Banner Loading.."
+                />
+                {eachUser.id === user.uid ? (
+                  <div className={addCoverPhoto}>
+                    <input type="file" onChange={handleCoverImageChange} />
+                    {coverImage && (
+                      <button
+                        disabled={loading || !coverImage}
+                        onClick={handleUploadCoverImage}
+                      >
+                        <FontAwesomeIcon icon={faCamera} />
+                      </button>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+
         {userInfo
           .filter((users: IUser) => users.id === id)
           .map((eachUser: IUser) => {
@@ -158,22 +280,26 @@ export const Profile = () => {
               <div key={eachUser.id} className={profileBox}>
                 <div className={profileImgBox}>
                   <img
-                    key={Math.random() * 1000}
-                    src={eachUser.userPhoto}
-                    alt="Profile Picture Loading..."
+                    src={`${eachUser.userPhoto}?${new Date().getTime()}`}
+                    alt="Loading..."
                     className={profileImg}
                   />
-                  <div className={addProfilePhoto}>
-                    <input type="file" onChange={handleImageChange} />
-                    <button
-                      disabled={loading || !image}
-                      onClick={handleUploadProfileImage}
-                    >
-                      <FontAwesomeIcon icon={faCamera} />
-                    </button>
-                  </div>
+                  {eachUser.id === user.uid ? (
+                    <div className={addProfilePhoto}>
+                      <input type="file" onChange={handleImageChange} />
+                      <button
+                        disabled={loading || !profileImage}
+                        onClick={handleUploadProfileImage}
+                      >
+                        <FontAwesomeIcon
+                          icon={faCamera}
+                          className={profileImgIcon}
+                        />
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
-                <p>{eachUser.userName}</p>
+                <p className={profileUserName}>{eachUser.userName}</p>
               </div>
             );
           })}
@@ -181,61 +307,63 @@ export const Profile = () => {
 
       <div className={userInfoBox}>
         <div className={infoBox}>
-          <button
-            onClick={() => {
-              return (
-                setPostRender(true),
-                setFollowersRender(false),
-                setFollowingRender(false),
-                setAboutRender(false)
-              );
-            }}
-          >
-            Posts
-          </button>
+          <div className={profileNav}>
+            <button
+              onClick={() => {
+                return (
+                  setPostRender(true),
+                  setFollowersRender(false),
+                  setFollowingRender(false),
+                  setAboutRender(false)
+                );
+              }}
+            >
+              Posts
+            </button>
 
-          <button
-            onClick={() => {
-              return (
-                setFollowersRender(true),
-                setPostRender(false),
-                setFollowingRender(false),
-                setAboutRender(false)
-              );
-            }}
-          >
-            Followers
-          </button>
-          <button
-            onClick={() => {
-              return (
-                setFollowingRender(true),
-                setPostRender(false),
-                setFollowersRender(false),
-                setAboutRender(false)
-              );
-            }}
-          >
-            Following
-          </button>
-          <button
-            onClick={() => {
-              return (
-                setAboutRender(true),
-                setFollowersRender(false),
-                setPostRender(false),
-                setFollowingRender(false)
-              );
-            }}
-          >
-            About
-          </button>
+            <button
+              onClick={() => {
+                return (
+                  setFollowersRender(true),
+                  setPostRender(false),
+                  setFollowingRender(false),
+                  setAboutRender(false)
+                );
+              }}
+            >
+              Followers
+            </button>
+            <button
+              onClick={() => {
+                return (
+                  setFollowingRender(true),
+                  setPostRender(false),
+                  setFollowersRender(false),
+                  setAboutRender(false)
+                );
+              }}
+            >
+              Following
+            </button>
+            <button
+              onClick={() => {
+                return (
+                  setAboutRender(true),
+                  setFollowersRender(false),
+                  setPostRender(false),
+                  setFollowingRender(false)
+                );
+              }}
+            >
+              About
+            </button>
+          </div>
           {postRender ? (
-            <div className={post}>
+            <div className={profilePost}>
               <Post />
             </div>
           ) : null}
-          {followersRender ? <div>Followers</div> : null}
+          {followersRender ? <div>{<Followers />}</div> : null}
           {followingRender ? <div>Following</div> : null}
           {aboutRender ? <About /> : null}
         </div>

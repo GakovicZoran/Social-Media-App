@@ -7,9 +7,9 @@ const bioContainer = css`
   flex-direction: column;
 `;
 export const AddBio = () => {
-  const { setBio, bio } = useContext(AuthContext);
+  const { bio, setBio } = useContext(AuthContext);
 
-  const handleUserBio = (e: any) => {
+  const handleUserBio = (e: { target: { value: string; name: string } }) => {
     const value = e.target.value;
     setBio({
       ...bio,
@@ -42,7 +42,7 @@ export const AddBio = () => {
 
       <input
         onChange={handleUserBio}
-        type="text"
+        type="date"
         placeholder="Type Birth Year: "
         name="birthDate"
       ></input>

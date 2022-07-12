@@ -1,8 +1,8 @@
 import { css } from "@emotion/css";
 import { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../../../Context/AuthContext";
-import { IUser } from "../../../Interfaces/Interfaces";
+import { AuthContext } from "../../Context/AuthContext";
+import { IUser } from "../../Interfaces/Interfaces";
 
 const usersRoomsContainer = css`
   width: 30%;
@@ -28,13 +28,13 @@ const usersList = css`
 `;
 
 export const ActiveUsers = () => {
-  const { userInfo } = useContext(AuthContext);
+  const { userInfo, user } = useContext(AuthContext);
   const navigate = useNavigate();
 
   return (
     <div className={usersRoomsContainer}>
       {userInfo?.map((users: IUser) => {
-        return (
+        return users.id !== user?.uid ? (
           <ul key={users.id} className={usersList}>
             <Link
               to={users.id}
@@ -48,7 +48,7 @@ export const ActiveUsers = () => {
               </li>
             </Link>
           </ul>
-        );
+        ) : null;
       })}
     </div>
   );

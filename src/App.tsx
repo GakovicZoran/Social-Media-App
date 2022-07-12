@@ -16,28 +16,28 @@ import { auth, db } from "./components/data/firebaseConfig";
 import { Explore } from "./components/Body/Explore";
 import { Profile } from "./components/Body/Profile/Profile";
 import { setDoc, doc } from "firebase/firestore";
-import { IMesProp, IUser, IUserBio } from "./components/Interfaces/Interfaces";
+import {
+  IComments,
+  IFollowers,
+  IMessage,
+  IPost,
+  IUser,
+} from "./components/Interfaces/Interfaces";
 import { AuthContext } from "./components/Context/AuthContext";
 import { ForgotPassword } from "./components/Auth/ForgotPassword";
 import firebase from "firebase/compat/app";
-import { Chat } from "./components/Body/Profile/Chat/Chat";
 
 const App = () => {
-  /////////////////////// OVA DVA ZA SADA NISTA///////////
-  const [storingPost, setStoringPost] = useState<any>([]);
-  const [textPost, setTextPost] = useState<any>();
-  ////////////////////////////////////////////////////
   const [user, setUser] = useState<any>({});
   const [userInfo, setUserInfo] = useState<IUser[]>([]);
-  const [name, setName] = useState<string>("");
-  // OVAJ EMAIL MI VJER NE TREBA JER VEC IMAM EMAIL U SIGN IN SIGN UP KORISTI OVAJ EMAIL ZA NJIH SVE
-  const [email, setEmail] = useState<string>("");
   const [bio, setBio] = useState<{}>({});
-  const [messages, setMessages] = useState<IMesProp[]>([]);
-
-  // Default user image
-  const photoUrl =
-    "https://minervastrategies.com/wp-content/uploads/2016/03/default-avatar.jpg";
+  const [storingPost, setStoringPost] = useState<IPost[]>([]);
+  const [textPost, setTextPost] = useState<string>("");
+  const [postComment, setPostComment] = useState<IComments[]>([]);
+  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [messages, setMessages] = useState<IMessage[]>([]);
+  const [followers, setFollowers] = useState<IFollowers[]>([]);
 
   const createUser = async (email: string, password: string) => {
     await createUserWithEmailAndPassword(auth, email, password);
@@ -45,7 +45,8 @@ const App = () => {
     if (auth.currentUser) {
       updateProfile(auth.currentUser, {
         displayName: name,
-        photoURL: photoUrl,
+        photoURL:
+          "https://minervastrategies.com/wp-content/uploads/2016/03/default-avatar.jpg",
       });
 
       try {
@@ -53,9 +54,11 @@ const App = () => {
           userEmail: auth.currentUser.email,
           userName: name,
           userBio: bio,
-          userPhoto: photoUrl,
+          userPhoto:
+            "https://minervastrategies.com/wp-content/uploads/2016/03/default-avatar.jpg",
+          userCoverPhoto:
+            "https://content.nevernotfunny.com/resources/web_res/images/defaultCover.png",
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          // msg: messages,
         });
       } catch (err) {
         console.log(err);
@@ -82,9 +85,6 @@ const App = () => {
     return sendPasswordResetEmail(auth, email);
   };
 
-  console.log(user);
-  console.log(userInfo);
-
   return (
     <AuthContext.Provider
       value={{
@@ -105,6 +105,12 @@ const App = () => {
         setMessages,
         storingPost,
         setStoringPost,
+        textPost,
+        setTextPost,
+        postComment,
+        setPostComment,
+        followers,
+        setFollowers,
       }}
     >
       <div>
@@ -117,7 +123,6 @@ const App = () => {
             <Route path="/home" element={<Home />} />
             <Route path="/explore" element={<Explore />} />
             <Route path=":id" element={<Profile />} />
-            <Route path="/chat" element={<Chat />} />
           </Routes>
         </Router>
       </div>

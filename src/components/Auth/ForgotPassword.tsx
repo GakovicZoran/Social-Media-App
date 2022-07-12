@@ -1,47 +1,110 @@
-import { SyntheticEvent, useContext, useState } from "react";
+import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../Context/AuthContext";
 import { css } from "@emotion/css";
+import { faLock } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-const signInContainer = css`
+const forgotPassContainer = css`
   text-align: center;
+  border: 2px solid black;
+  width: 500px;
+  margin: 10vh auto;
+  border-radius: 10px;
+  box-shadow: 0px 0px 5px 0px #666;
+
+  & h2 {
+    font-size: 22px;
+    font-weight: 500;
+    margin-top: 10px;
+  }
+
   & form {
-    width: 500px;
+    width: 400px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
+
   & input {
-    width: 300px;
-    padding: 18px 14px;
+    width: 100%;
+    height: 30px;
+    padding: 15px 12px;
+    font-size: 18px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    border: 1px solid #bdbbbb;
+  }
+
+  & button {
     font-size: 16px;
+    align-self: center;
+    border: none;
+    background-color: #d5d3d3;
+    padding: 12px 22px;
+    font-weight: bold;
+    color: #007bff;
+    text-transform: uppercase;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+`;
+
+const lockIcon = css`
+  margin-top: 100px;
+  font-size: 22px;
+  background-color: #f01b1b;
+  padding: 15px;
+  border-radius: 100px;
+  color: white;
+`;
+
+const errorStyle = css`
+  color: red;
+  background-color: #c2c1c177;
+  max-width: 55%;
+  margin: 30px auto;
+  padding: 10px 20px;
+  font-size: 17px;
+  border-radius: 10px;
+`;
+
+const resetPassNav = css`
+  display: flex;
+  justify-content: space-between;
+  color: #007bff;
+  font-size: 16px;
+  margin: 30px 40px 70px 40px;
+  & a {
+    color: #007bff;
+    text-decoration: none;
   }
 `;
 export const ForgotPassword = () => {
   const [email, setEmail] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const { passwordReset } = useContext(AuthContext);
   const [message, setMessage] = useState<string>("");
-  //////////////////// Mozda trebam isti email kao iz login tj da uzmem iz baze pa onda resetujem, sutra to rijesi
-  const handleSubmit = async (e: SyntheticEvent) => {
+  const { passwordReset } = useContext(AuthContext);
+
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     try {
-      // DODAJ KASNIJE LOADING I SETLOADING
       setMessage("");
       setError("");
       await passwordReset(email);
-      setMessage("check you're email inbox for instructions");
+      setMessage("Please check you're email inbox for instructions!");
     } catch {
-      setError("failed to reset password");
+      setError("Failed to RESET password, try again!");
     }
   };
 
   return (
-    <div className={signInContainer}>
+    <div className={forgotPassContainer}>
+      <FontAwesomeIcon icon={faLock} className={lockIcon} />
       <h2>Password Reset</h2>
-      {error && <p>Email je nepostojeci!</p>}
-      {message && <p>{message}</p>}
+      {error && <p className={errorStyle}>{error}!</p>}
+      {message && <p className={errorStyle}>{message}</p>}
 
       <form onSubmit={handleSubmit}>
         <input
@@ -54,10 +117,13 @@ export const ForgotPassword = () => {
           <button>Reset</button>
         </div>
       </form>
-
-      <Link to="/">Sign In</Link>
-      <div>
-        Don't have an account? <Link to="/signup">Sign up</Link>
+      <div className={resetPassNav}>
+        <span>
+          <Link to="/signup">Don't have an account? Sign up</Link>
+        </span>
+        <div>
+          <Link to="/">Sign In</Link>
+        </div>
       </div>
     </div>
   );

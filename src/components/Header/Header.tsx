@@ -10,11 +10,12 @@ const headerStyle = css`
   border-bottom: 1px solid black;
   justify-content: space-between;
   background-color: rgb(224, 224, 224);
-  padding: 0 30px 0 30px;
+  padding: 5px 10px;
+
   & span {
     background-color: black;
     border-radius: 10px;
-    padding: 4px 7px;
+    padding: 5px 15px;
     font-size: 20px;
   }
 `;
@@ -31,10 +32,10 @@ export const Header = () => {
     <div className={headerStyle}>
       <span>
         <Link to="/home" className={logo}>
-          Social
+          Social Media App
         </Link>
       </span>
-      {user && <Nav />}
+      {user ? <Nav /> : null}
     </div>
   );
 };

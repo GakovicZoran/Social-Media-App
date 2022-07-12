@@ -1,5 +1,5 @@
 import { css } from "@emotion/css";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../Context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -9,6 +9,7 @@ import {
   faUser,
   faArrowRightFromBracket,
 } from "@fortawesome/free-solid-svg-icons";
+import { IUser } from "../Interfaces/Interfaces";
 
 const navContainer = css`
   & ul {
@@ -27,29 +28,74 @@ const navContainer = css`
 const navBarIcons = css`
   font-size: 27px;
 `;
+
+const searchContainer = css`
+  margin-right: 35px;
+  & input {
+    width: 300px;
+    height: 30px;
+    font-size: 15px;
+  }
+`;
+
+const searchList = css`
+  position: absolute;
+  padding: 0 5px;
+  flex-direction: column;
+  width: 288px;
+  & a {
+    color: white;
+  }
+
+  & li {
+    width: 100%;
+    display: flex;
+    padding: 10px 0 10px 10px;
+    align-items: center;
+    background-color: #2c2c2ccf;
+  }
+
+  & img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  & p {
+    padding-left: 10px;
+  }
+`;
+
 export const Nav = () => {
+  const [search, setSearch] = useState<string>("");
   const { logOut, user, userInfo } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const handlerSearchChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  const searchUsers = userInfo.filter((val: { userName: string }) => {
+    if (search === "") {
+    } else if (val.userName.toLowerCase().includes(search.toLowerCase())) {
+      return val;
+    }
+  });
+
   const handleLogOut = async () => {
     try {
-      // ispitaj ovo await sto ovdje
       await logOut();
       navigate("/");
-      // kasnije dodaj state i poruku kada se izloguje user
-      console.log("you are logout");
+      setSearch("");
     } catch (err) {
       console.log(err);
     }
   };
-
   return (
     <div className={navContainer}>
       <nav>
         <ul>
-          <li>
-            <Link to="/chat">CHAT</Link>
-          </li>
           <li>
             <Link to="/home">
               <FontAwesomeIcon icon={faHome} className={navBarIcons} />
@@ -65,7 +111,27 @@ export const Nav = () => {
               <FontAwesomeIcon icon={faUser} className={navBarIcons} />
             </Link>
           </li>
-          <input></input>
+          <div className={searchContainer}>
+            <input
+              value={search}
+              type="text"
+              onChange={handlerSearchChanges}
+              placeholder="Search over many users!"
+            ></input>
+            <ul className={searchList}>
+              {searchUsers.map(({ userName, userPhoto, id }: IUser) => {
+                return (
+                  <Link key={id} to={`/${id}`}>
+                    <li>
+                      <img alt="Loading.." src={userPhoto}></img>
+                      <p>{userName} </p>
+                    </li>
+                  </Link>
+                );
+              })}
+            </ul>
+          </div>
+
           <button onClick={handleLogOut}>
             <FontAwesomeIcon
               icon={faArrowRightFromBracket}

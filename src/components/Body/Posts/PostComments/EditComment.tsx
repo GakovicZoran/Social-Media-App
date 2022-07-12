@@ -2,7 +2,7 @@ import { css } from "@emotion/css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
-import { ModalComment } from "./ModalComment";
+import { ModalEditComment } from "./ModalEditComment";
 
 const openModalBtn = css`
   align-items: center;
@@ -17,7 +17,11 @@ const openModalBtn = css`
   gap: 10px;
 `;
 
-export const EditComment = () => {
+interface IEditPost {
+  id: string;
+}
+
+export const EditComment = ({ id }: IEditPost) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const toggleModal = () => setIsModalOpen(true);
 
@@ -26,7 +30,7 @@ export const EditComment = () => {
       <button onClick={toggleModal} className={openModalBtn}>
         <FontAwesomeIcon icon={faEdit} />
       </button>
-      {isModalOpen && <ModalComment closeModal={setIsModalOpen} />}
+      {isModalOpen && <ModalEditComment closeModal={setIsModalOpen} id={id} />}
     </div>
   );
 };

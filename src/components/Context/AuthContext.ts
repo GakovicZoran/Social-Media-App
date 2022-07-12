@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { IAuthContext, IMesProp } from "../Interfaces/Interfaces";
+import { IAuthContext } from "../Interfaces/Interfaces";
 
 export const AuthContext = createContext<IAuthContext>({
   createUser: () => {},
@@ -33,10 +33,14 @@ export const AuthContext = createContext<IAuthContext>({
   setUserInfo: () => {},
   bio: {},
   setBio: () => {},
-  // photoUrl: "",
-  // setPhotoUrl: () => {},
   messages: [],
   setMessages: () => {},
   storingPost: [],
   setStoringPost: () => {},
+  textPost: "",
+  setTextPost: () => {},
+  postComment: [],
+  setPostComment: () => {},
+  followers: [],
+  setFollowers: () => {},
 });

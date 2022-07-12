@@ -1,10 +1,9 @@
 import { useContext, useState } from "react";
-import { db, auth } from "../../../data/firebaseConfig";
+import { db } from "../../data/firebaseConfig";
 import firebase from "firebase/compat/app";
 import { css } from "@emotion/css";
-import { AuthContext } from "../../../Context/AuthContext";
+import { AuthContext } from "../../Context/AuthContext";
 import { IoSendSharp } from "react-icons/io5";
-import { useParams } from "react-router-dom";
 import { addDoc, collection, doc } from "firebase/firestore";
 
 const sendMsg = css`
@@ -52,9 +51,7 @@ interface IAppProps {
 
 export const SendMessage = ({ scroll }: IAppProps) => {
   const [msg, setMsg] = useState<string>("");
-  const { userInfo, user } = useContext(AuthContext);
-  const { id } = useParams();
-  // console.log(id);
+  const { user } = useContext(AuthContext);
 
   const handlerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMsg(e.target.value);
@@ -65,21 +62,20 @@ export const SendMessage = ({ scroll }: IAppProps) => {
     if (msg === "") return;
 
     try {
-      // await db.collection("messages").add({});
-      const docRef = doc(db, "users", `${auth?.currentUser?.uid}`);
+      const docRef = doc(db, "chats", "chatRoom");
       const colRef = collection(docRef, "messages");
       addDoc(colRef, {
         text: msg,
         name: user.displayName,
         photoURL: user.photoURL,
-        uid: user.uid,
+        fromID: user.uid,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     } catch (err) {
       console.log(err);
     }
     setMsg("");
-    scroll.current.scrollTo({ top: 2000, behavior: "smooth" });
+    scroll?.current.scrollTo({ top: 2000, behavior: "smooth" });
   };
 
   return (

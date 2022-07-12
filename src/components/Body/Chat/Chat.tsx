@@ -1,16 +1,13 @@
-import { useState, useEffect, useRef, useContext } from "react";
-import { auth, db } from "../../../data/firebaseConfig";
-import { SendMessage } from "../Chat/SendMessage";
+import { useEffect, useRef, useContext } from "react";
+import { auth, db } from "../../data/firebaseConfig";
+import { SendMessage } from "./SendMessage";
 import { css } from "@emotion/css";
-import { AuthContext } from "../../../Context/AuthContext";
-import { IMesProp, IUser } from "../../../Interfaces/Interfaces";
-import { Timestamp } from "firebase/firestore";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { AuthContext } from "../../Context/AuthContext";
+import { IMessage } from "../../Interfaces/Interfaces";
 import { ActiveUsers } from "./ActiveUsers";
 
 const chatBox = css`
   width: 50%;
-  // height: auto;
 `;
 
 const chatMsgs = css`
@@ -87,10 +84,6 @@ const received = css`
   align-items: start;
 `;
 
-const timestamp = css`
-  font-size: 13px;
-`;
-
 const userName = css`
   margin: 7px 0 0 0;
   font-weight: bold;
@@ -103,23 +96,17 @@ const msgsBox = css`
   width: 70%;
 `;
 export const Chat = () => {
-  const scroll = useRef<HTMLInputElement>(null);
-  const { user, userInfo, messages, setMessages } = useContext(AuthContext);
-  const { id } = useParams();
-  // console.log(id);
-  // UGLAVNOM MORAO BIH IMATI NEKAKAV REALTIME UPDATE U BAZI, TO VEC IMAM U KOLEKCIJI TAKO DA STA CE MI I U BAZI HMM
+  const { user, messages, setMessages } = useContext(AuthContext);
+  const scroll = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    db.collection(`/users/${auth?.currentUser?.uid}/messages`)
+    db.collection(`/chats/chatRoom/messages`)
       .orderBy("createdAt")
       .limit(50)
       .onSnapshot((snapshot) => {
         setMessages(snapshot.docs.map((doc: any) => doc.data()));
       });
   }, []);
-
-  console.log(messages);
-
-  console.log(userInfo);
 
   return (
     <div className={chatBox}>
@@ -130,19 +117,17 @@ export const Chat = () => {
         <ActiveUsers />
         <div className={msgsBox}>
           {messages
-            .filter((users: any) => users.id !== user.uid)
-            .map(({ createdAt, text, photoURL, uid, name }: IMesProp) => (
+            .filter((users: IMessage) => users.id !== user?.uid)
+            .map(({ createdAt, text, photoURL, fromID, name }: IMessage) => (
               <div
                 key={Math.random() * 1000}
                 className={`
-               ${msg} ${uid === auth?.currentUser?.uid ? sent : received}
+               ${msg} ${fromID === auth?.currentUser?.uid ? sent : received}
                
              `}
               >
-                {/* <Timestamp className={timestamp} date={createdAt?.toDate()} /> */}
-
                 <p className={userName}>{name}</p>
-                <div className={imgAndMsg(uid === auth?.currentUser?.uid)}>
+                <div className={imgAndMsg(fromID === auth?.currentUser?.uid)}>
                   <img className={img} src={photoURL} alt="Loading..." />
                   <p className={userText}>{text}</p>
                 </div>

@@ -1,5 +1,6 @@
 import { css } from "@emotion/css";
-import { useContext, useState } from "react";
+import { useState } from "react";
+import { auth, db } from "../../../data/firebaseConfig";
 
 const modalCommentContainer = css`
   position: absolute;
@@ -45,44 +46,44 @@ const saveCommentChange = css`
 
 interface IModalProp {
   closeModal: (active: boolean) => void;
+  id: string;
 }
 
-export const ModalComment = ({ closeModal }: IModalProp) => {
-  // const { storingPost, setStoringPost } = useContext(AuthContext);
+export const ModalEditComment = ({ closeModal, id }: IModalProp) => {
+  const [updatedComment, setUpdatedComment] = useState<string>("");
 
-  const [test, setTest] = useState<any>();
-  // storingPost.map((user: any) => user.userPost)
-
-  const updated = { test };
   const handleCommentEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setTest(e.target.value);
+    setUpdatedComment(e.target.value);
+  };
+
+  const handleEdit = async (id: string) => {
+    await db
+      .collection(`/users/${auth?.currentUser?.uid}/comments`)
+      .doc(id)
+      .update({
+        userComment: updatedComment,
+      });
+    closeModal(false);
   };
 
   return (
     <div className={modalCommentContainer}>
-      <h4>Edit Post</h4>
+      <h4>Edit Comment</h4>
       <button className={btnCloseModal} onClick={() => closeModal(false)}>
         x
       </button>
       <div className={editText}>
-        <p>Post Text:</p>
+        <p>New Text:</p>
         <textarea
           onChange={handleCommentEdit}
-          value={test}
+          value={updatedComment}
           className={editCommentInput}
           required
         ></textarea>
-        <p>Post Image:</p>
       </div>
       <div className={saveCommentChange}>
         <button onClick={() => closeModal(false)}>Close</button>
-        <button
-          onClick={() => {
-            setTest(test);
-          }}
-        >
-          Save Changes
-        </button>
+        <button onClick={() => handleEdit(id)}>Save Changes</button>
       </div>
     </div>
   );
