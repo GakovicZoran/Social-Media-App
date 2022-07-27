@@ -9,7 +9,7 @@ import {
   faUser,
   faArrowRightFromBracket,
 } from "@fortawesome/free-solid-svg-icons";
-import { IUser } from "../Interfaces/Interfaces";
+import { IUsers } from "../Interfaces/Interfaces";
 
 const navContainer = css`
   & ul {
@@ -69,16 +69,25 @@ const searchList = css`
 
 export const Nav = () => {
   const [search, setSearch] = useState<string>("");
-  const { logOut, user, userInfo } = useContext(AuthContext);
+  const {
+    logOut,
+    user,
+    users,
+    setUsers,
+    setUser,
+    setFollowers,
+    setFollowing,
+    setBio,
+  } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handlerSearchChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
 
-  const searchUsers = userInfo.filter((val: { userName: string }) => {
-    if (search === "") {
-    } else if (val.userName.toLowerCase().includes(search.toLowerCase())) {
+  const searchUsers = users.filter((val: { userName: string }) => {
+    if (search === "") return "";
+    else if (val.userName.toLowerCase().includes(search.toLowerCase())) {
       return val;
     }
   });
@@ -88,6 +97,11 @@ export const Nav = () => {
       await logOut();
       navigate("/");
       setSearch("");
+      setUsers([]);
+      setUser({});
+      setBio({});
+      setFollowers([]);
+      setFollowing([]);
     } catch (err) {
       console.log(err);
     }
@@ -119,7 +133,7 @@ export const Nav = () => {
               placeholder="Search over many users!"
             ></input>
             <ul className={searchList}>
-              {searchUsers.map(({ userName, userPhoto, id }: IUser) => {
+              {searchUsers.map(({ userName, userPhoto, id }: IUsers) => {
                 return (
                   <Link key={id} to={`/${id}`}>
                     <li>

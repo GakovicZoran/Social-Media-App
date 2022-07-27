@@ -1,13 +1,12 @@
 import { css } from "@emotion/css";
-import { addDoc, collection, deleteDoc, doc } from "firebase/firestore";
-import { useContext, useEffect, useState } from "react";
-import { auth, db } from "../../../data/firebaseConfig";
-import firebase from "firebase/compat/app";
+import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore";
+import { useContext, useRef } from "react";
+import { db } from "../../../data/firebaseConfig";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { AuthContext } from "../../../Context/AuthContext";
 import { EditComment } from "./EditComment";
-import { IComments } from "../../../Interfaces/Interfaces";
+import { IComments, IPosts } from "../../../Interfaces/Interfaces";
 
 const userCommentInput = css`
   width: 99%;
@@ -61,107 +60,132 @@ const postCommentBtn = css`
 
 const userInfoCommentPost = css`
   display: flex;
-  gap: 20px;
+  gap: 15px;
   margin-bottom: 20px;
-
+  align-items: center;
   & img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
     font-weight: 20px;
   }
+
+  & strong {
+    margin-right: 10px;
+  }
 `;
-export const Comments = () => {
-  const [textComment, setTextComment] = useState<string>("");
-  const { user, postComment, setPostComment } = useContext(AuthContext);
+interface ICommentsProp {
+  postID: string;
+}
 
-  const handleCommentUpload = async (e: React.MouseEvent<HTMLElement>) => {
+export const Comments = ({ postID }: ICommentsProp) => {
+  const { user, textComment, setTextComment, posts } = useContext(AuthContext);
+  const commentRef = useRef(null);
+
+  const handlerCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTextComment(e.target.value);
+  };
+
+  // Nisam znao rijesiti any, problem je u e.target.reset //
+  const onSubmitComment = async (e: any) => {
     e.preventDefault();
-
     if (textComment === "") return;
 
     try {
-      const docRef = doc(db, "users", `${auth?.currentUser?.uid}`);
-      const colRef = collection(docRef, "comments");
-
-      addDoc(colRef, {
-        userComment: textComment,
-        userCommentName: user.displayName,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      const postRef = db.collection("posts").doc(postID);
+      await postRef.update({
+        comments: arrayUnion({
+          userComment: textComment,
+          userCommentName: user.displayName,
+          postOwnerID: postID,
+          ownerPhoto: user.photoURL,
+          ownerID: user.uid,
+        }),
       });
     } catch (err) {
       console.log(err);
     }
-    setTextComment("");
-  };
-
-  useEffect(() => {
-    db.collection(`/users/${auth?.currentUser?.uid}/comments`)
-      .orderBy("createdAt")
-      .limit(50)
-      .onSnapshot((snapshot) => {
-        setPostComment(
-          snapshot.docs.map((doc: any) => {
-            return { ...doc.data(), id: doc.id as any };
-          })
-        );
-      });
-  }, []);
-
-  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setTextComment(e.target.value);
+    e.target.reset();
   };
 
   // Delete comments
-  const deleteComment = async (id: string) => {
-    const commentDoc = doc(db, `/users/${auth?.currentUser?.uid}/comments`, id);
+  const deleteComment = async (index: number) => {
+    const currentPost = posts.filter((post: IPosts) => post.id === postID)[0];
+    const currentComment = currentPost.comments[index];
+
     try {
-      await deleteDoc(commentDoc);
+      const commentRef = doc(db, "posts", `${postID}`);
+
+      await updateDoc(commentRef, {
+        comments: arrayRemove(currentComment),
+      });
     } catch (err) {
-      console.error(err);
+      console.log(err);
     }
   };
 
   return (
     <div>
       <div>
-        {postComment
-          .filter((matchID: IComments) => matchID.id !== matchID.postID)
-          .map(({ userComment, id, createdAt }: IComments) => {
-            return (
-              <div key={id}>
-                <div className={commentsMessages}>
-                  <div className={userInfoCommentPost}>
-                    <img
-                      className={userProfilePostImg}
-                      src={user.photoURL as any}
-                      alt="Loading..."
-                    />
-                    <p>
-                      {user.displayName}: <span>{userComment}</span>
-                    </p>
-                  </div>
-                  <div className={editDeleteCommentBox}>
-                    <div>
-                      <EditComment id={id} />
+        {posts.map((postComments: IPosts) =>
+          postComments?.comments
+            ?.filter(({ postOwnerID }: IComments) => postOwnerID === postID)
+            .map(
+              (
+                {
+                  userComment,
+                  userCommentName,
+                  ownerPhoto,
+                  ownerID,
+                }: IComments,
+                index: number
+              ) => {
+                return (
+                  <div key={Math.random() * 1000}>
+                    <div className={commentsMessages}>
+                      <div className={userInfoCommentPost}>
+                        <img
+                          className={userProfilePostImg}
+                          src={ownerPhoto}
+                          alt="Loading..."
+                        />
+                        <div>
+                          <strong> {userCommentName}:</strong>
+                          <span>{userComment}</span>
+                        </div>
+                      </div>
+                      <div className={editDeleteCommentBox}>
+                        {user.uid === ownerID ? (
+                          <div>
+                            {<EditComment index={index} postID={postID} />}
+                          </div>
+                        ) : null}
+                        {user.uid === ownerID ? (
+                          <div>
+                            <button onClick={() => deleteComment(index)}>
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
-                    <div>
-                      <button onClick={() => deleteComment(id)}>
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              }
+            )
+        )}
       </div>
-      <textarea
-        value={textComment}
-        onChange={handleCommentChange}
-        className={userCommentInput}
-        placeholder="Write a comment..."
-      ></textarea>
-      <button onClick={handleCommentUpload} className={postCommentBtn}>
-        POST COMMENT
-      </button>
+      <form onSubmit={onSubmitComment}>
+        <textarea
+          ref={commentRef}
+          onChange={handlerCommentChange}
+          className={userCommentInput}
+          placeholder="Write a comment..."
+        ></textarea>
+
+        <button className={postCommentBtn}>POST COMMENT</button>
+      </form>
     </div>
   );
 };

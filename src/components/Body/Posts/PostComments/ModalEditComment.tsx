@@ -1,6 +1,9 @@
 import { css } from "@emotion/css";
-import { useState } from "react";
+import { arrayUnion, doc, FieldValue, updateDoc } from "firebase/firestore";
+import { useContext, useState } from "react";
+import { AuthContext } from "../../../Context/AuthContext";
 import { auth, db } from "../../../data/firebaseConfig";
+import { IPosts } from "../../../Interfaces/Interfaces";
 
 const modalCommentContainer = css`
   position: absolute;
@@ -46,23 +49,38 @@ const saveCommentChange = css`
 
 interface IModalProp {
   closeModal: (active: boolean) => void;
-  id: string;
+  index: number;
+  postID: string;
 }
 
-export const ModalEditComment = ({ closeModal, id }: IModalProp) => {
+export const ModalEditComment = ({ closeModal, index, postID }: IModalProp) => {
   const [updatedComment, setUpdatedComment] = useState<string>("");
+  const { posts } = useContext(AuthContext);
 
-  const handleCommentEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handlerCommentEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setUpdatedComment(e.target.value);
   };
 
-  const handleEdit = async (id: string) => {
-    await db
-      .collection(`/users/${auth?.currentUser?.uid}/comments`)
-      .doc(id)
-      .update({
-        userComment: updatedComment,
+  const handlerEdit = async (index: number) => {
+    const currentPost = posts.filter((post: IPosts) => post.id === postID)[0];
+    const currentComment = currentPost.comments[index];
+    const userComment = Object.values(currentComment)[0];
+    const commentRef = doc(db, "posts", `${postID}`);
+
+    try {
+      await updateDoc(commentRef, {
+        comments: [
+          {
+            userComment: updatedComment,
+          },
+        ],
+
+        // Adding new arr outside comment arr
+        // comments: arrayUnion(currentComment),
       });
+    } catch (err) {
+      console.log(err);
+    }
     closeModal(false);
   };
 
@@ -75,7 +93,7 @@ export const ModalEditComment = ({ closeModal, id }: IModalProp) => {
       <div className={editText}>
         <p>New Text:</p>
         <textarea
-          onChange={handleCommentEdit}
+          onChange={handlerCommentEdit}
           value={updatedComment}
           className={editCommentInput}
           required
@@ -83,7 +101,7 @@ export const ModalEditComment = ({ closeModal, id }: IModalProp) => {
       </div>
       <div className={saveCommentChange}>
         <button onClick={() => closeModal(false)}>Close</button>
-        <button onClick={() => handleEdit(id)}>Save Changes</button>
+        <button onClick={() => handlerEdit(index)}>Save Changes</button>
       </div>
     </div>
   );

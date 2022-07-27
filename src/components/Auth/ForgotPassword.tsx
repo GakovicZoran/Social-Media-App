@@ -87,7 +87,7 @@ export const ForgotPassword = () => {
   const [message, setMessage] = useState<string>("");
   const { passwordReset } = useContext(AuthContext);
 
-  const handleSubmit = async (e: React.SyntheticEvent) => {
+  const handlerSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     try {
       setMessage("");
@@ -106,7 +106,7 @@ export const ForgotPassword = () => {
       {error && <p className={errorStyle}>{error}!</p>}
       {message && <p className={errorStyle}>{message}</p>}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handlerSubmit}>
         <input
           type="email"
           onChange={(e) => setEmail(e.target.value)}

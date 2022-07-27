@@ -1,4 +1,4 @@
-export interface IUser {
+export interface IUsers {
   userEmail: string;
   userName: string;
   userPhoto: string;
@@ -18,27 +18,27 @@ export interface IAuthContext {
   passwordReset: (email: string) => void;
 
   user: ICurrentUser;
-
+  setUser: (user: any) => void;
   logOut: () => void;
   signIn: (email: string, password: string) => void;
   name: string;
   setName: React.Dispatch<React.SetStateAction<string>>;
   email: string;
   setEmail: React.Dispatch<React.SetStateAction<string>>;
-  userInfo: IUser[];
-  setUserInfo: (user: IUser[]) => void;
+  users: IUsers[];
+  setUsers: (user: IUsers[]) => void;
   bio: object;
   setBio: React.Dispatch<React.SetStateAction<{}>>;
-  messages: IMessage[];
-  setMessages: React.Dispatch<React.SetStateAction<IMessage[]>>;
-  storingPost: IPost[];
-  setStoringPost: React.Dispatch<React.SetStateAction<IPost[]>>;
-  textPost: string;
-  setTextPost: React.Dispatch<React.SetStateAction<string>>;
-  postComment: IComments[];
-  setPostComment: React.Dispatch<React.SetStateAction<IComments[]>>;
-  followers: IFollowers[];
-  setFollowers: React.Dispatch<React.SetStateAction<IFollowers[]>>;
+  posts: IPosts[];
+  setPosts: React.Dispatch<React.SetStateAction<IPosts[]>>;
+  textComment: string;
+  setTextComment: React.Dispatch<React.SetStateAction<string>>;
+  following: IFollow[];
+  setFollowing: React.Dispatch<React.SetStateAction<IFollow[]>>;
+  followers: IFollow[];
+  setFollowers: React.Dispatch<React.SetStateAction<IFollow[]>>;
+  liked: any[];
+  setLiked: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 export interface IUserBio {
@@ -49,7 +49,7 @@ export interface IUserBio {
   id: string;
 }
 
-export interface IMessage {
+export interface IMessages {
   createdAt: {
     nanoseconds: number;
     seconds: number;
@@ -69,10 +69,14 @@ export interface IComments {
     seconds: number;
   };
   id: string;
-  postID: string;
+  postOwnerID: string;
+  ownersName: string;
+  ownerPhoto: string;
+  unicatePostID: string;
+  ownerID: string;
 }
 
-export interface IPost {
+export interface IPosts {
   userPost: string;
   userPostPhoto: string;
   createdAt: {
@@ -80,6 +84,11 @@ export interface IPost {
     seconds: number;
   };
   id: string;
+  ownerID: string;
+  ownerName: string;
+  ownerPhoto: string;
+  comments: [];
+  likeID: [];
 }
 
 export interface IFile {
@@ -111,10 +120,9 @@ export interface ICurrentUser {
   uid: string;
 }
 
-export interface IFollowers {
-  createdAt: {
-    nanoseconds: number;
-    seconds: number;
-  };
+export interface IFollow {
   userName: string;
+  id: string;
+  uid: string;
+  userPhoto: string;
 }

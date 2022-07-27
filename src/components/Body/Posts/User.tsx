@@ -1,6 +1,5 @@
 import { css } from "@emotion/css";
 import { useContext } from "react";
-import { Link } from "react-router-dom";
 import { AuthContext } from "../../Context/AuthContext";
 
 const userContainer = css`
@@ -20,21 +19,29 @@ const userContainer = css`
     color: black;
     font-weight: 500;
   }
+
+  & p {
+    font-size: 22px;
+    font-weight: 500;
+  }
 `;
 export const User = () => {
-  const { user } = useContext(AuthContext);
+  const { user, followers, following } = useContext(AuthContext);
 
   return (
     <div className={userContainer}>
       <div key={user?.uid}>
         <img src={user?.photoURL as unknown as string} alt="Loading..." />
-
-        <Link to="/profile">
-          <p>{user?.displayName}</p>
-        </Link>
+        <p>{user?.displayName}</p>
       </div>
-      <span>Followers(0)</span> <br></br>
-      <span>Following(0)</span>
+
+      <div>
+        <span>Followers({followers.length})</span> <br></br>
+      </div>
+
+      <div>
+        <span>Following({following.length})</span> <br></br>
+      </div>
     </div>
   );
 };

@@ -1,16 +1,25 @@
-import { useEffect, useRef, useContext } from "react";
+import { useEffect, useRef, useContext, useState } from "react";
 import { auth, db } from "../../data/firebaseConfig";
-import { SendMessage } from "./SendMessage";
+import { SendMessages } from "./SendMessages";
 import { css } from "@emotion/css";
 import { AuthContext } from "../../Context/AuthContext";
-import { IMessage } from "../../Interfaces/Interfaces";
+import { IMessages } from "../../Interfaces/Interfaces";
 import { ActiveUsers } from "./ActiveUsers";
 
-const chatBox = css`
+const chatContainer = css`
   width: 50%;
 `;
 
-const chatMsgs = css`
+const chatHeader = css`
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-around;
+  align-items: center;
+  height: 45px;
+  background: #263238;
+`;
+
+const chatInnerContainer = css`
   display: flex;
   width: 100%;
   height: 90%;
@@ -20,16 +29,7 @@ const chatMsgs = css`
   background: #fff;
 `;
 
-const header = css`
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: space-around;
-  align-items: center;
-  height: 45px;
-  background: #263238;
-`;
-
-const headerTitle = css`
+const chatHeaderTitle = css`
   display: block;
   color: #fff;
   font-weight: 700;
@@ -37,27 +37,27 @@ const headerTitle = css`
   margin: 0;
 `;
 
-const img = css`
+const userChatImg = css`
   width: 40px;
   height: 40px;
   border-radius: 50%;
 `;
 
-const imgAndMsg = (currentUser: boolean) => css`
+const chatMsgs = (currentUser: boolean) => css`
   display: flex;
   align-items: center;
   height: 45px;
   flex-direction: ${currentUser ? "row-reverse" : "row"};
 `;
 
-const userText = css`
+const chatMsgsText = (sendOrRecive: boolean) => css`
   width: auto;
   height: auto;
   min-height: 40px;
   max-width: 120px;
-  background-color: #43a047;
+  background-color: ${sendOrRecive ? "rgb(224, 224, 224)" : "#4498489d"};
   border-radius: 5px;
-  color: white;
+  color: black;
   display: flex;
   align-items: center;
   margin-right: 5px;
@@ -68,74 +68,116 @@ const userText = css`
   word-break: break-word;
 `;
 
-const msg = css`
+const chatMsgsContainer = css`
   padding: 15px;
 `;
 
-const sent = css`
+const userSentMsgs = css`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
 `;
 
-const received = css`
+const userReceivedMsg = css`
   display: flex;
   flex-direction: column;
   align-items: start;
 `;
 
-const userName = css`
+const chatUserName = css`
   margin: 7px 0 0 0;
   font-weight: bold;
   color: #263238;
 `;
 
-const msgsBox = css`
+const chatMsgsBox = css`
   display: flex;
   flex-direction: column;
   width: 70%;
 `;
+
+const welcomeChatMsg = css`
+  margin: 0 auto;
+  font-size: 25px;
+`;
+
+const chatDate = css`
+  align-self: center;
+`;
 export const Chat = () => {
-  const { user, messages, setMessages } = useContext(AuthContext);
+  const [messages, setMessages] = useState<IMessages[]>([]);
+  const [roomName, setRoomName] = useState<string>("");
+  const { user } = useContext(AuthContext);
   const scroll = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    db.collection(`/chats/chatRoom/messages`)
-      .orderBy("createdAt")
-      .limit(50)
-      .onSnapshot((snapshot) => {
-        setMessages(snapshot.docs.map((doc: any) => doc.data()));
-      });
-  }, []);
+    if (roomName) {
+      db.collection(`chats/${roomName}/${roomName}`)
+        .orderBy("createdAt")
+        .limit(50)
+        .onSnapshot((snapshot) => {
+          setMessages(snapshot.docs.map((doc) => doc.data() as IMessages));
+        });
+    }
+  }, [roomName]);
 
   return (
-    <div className={chatBox}>
-      <div className={header}>
-        <p className={headerTitle}>Live chat</p>
+    <div className={chatContainer}>
+      <div className={chatHeader}>
+        <p className={chatHeaderTitle}>Live chat</p>
       </div>
-      <div ref={scroll} className={chatMsgs}>
-        <ActiveUsers />
-        <div className={msgsBox}>
+      <div ref={scroll} className={chatInnerContainer}>
+        <ActiveUsers
+          onUserClicked={(userID: string) =>
+            setRoomName(
+              user.uid < userID ? user.uid + userID : userID + user.uid
+            )
+          }
+        />
+        <div className={chatMsgsBox}>
+          <div className={welcomeChatMsg}>
+            {!roomName ? <p>Select a user to start conversation!</p> : null}
+          </div>
           {messages
-            .filter((users: IMessage) => users.id !== user?.uid)
-            .map(({ createdAt, text, photoURL, fromID, name }: IMessage) => (
-              <div
-                key={Math.random() * 1000}
-                className={`
-               ${msg} ${fromID === auth?.currentUser?.uid ? sent : received}
+            .filter((chatUser: IMessages) => chatUser.id !== user.uid)
+            .map(
+              ({ createdAt, text, photoURL, fromID, name, id }: IMessages) => (
+                <div
+                  key={id}
+                  className={`
+               ${chatMsgsContainer} ${
+                    fromID === auth.currentUser?.uid
+                      ? userSentMsgs
+                      : userReceivedMsg
+                  }
                
              `}
-              >
-                <p className={userName}>{name}</p>
-                <div className={imgAndMsg(fromID === auth?.currentUser?.uid)}>
-                  <img className={img} src={photoURL} alt="Loading..." />
-                  <p className={userText}>{text}</p>
+                >
+                  <p className={chatDate}>
+                    {new Date(createdAt?.seconds * 1000).toLocaleString([], {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </p>
+                  <p className={chatUserName}>{name}</p>
+                  <div className={chatMsgs(fromID === auth.currentUser?.uid)}>
+                    <img
+                      className={userChatImg}
+                      src={photoURL}
+                      alt="Loading..."
+                    />
+                    <p
+                      className={chatMsgsText(fromID === auth.currentUser?.uid)}
+                    >
+                      {text}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
         </div>
       </div>
-      <SendMessage scroll={scroll} />
+      <SendMessages scroll={scroll} roomName={roomName} />
     </div>
   );
 };

@@ -96,24 +96,31 @@ export const SignUp = () => {
   const { createUser, setName, setEmail, email } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.SyntheticEvent) => {
+  const handlerSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+
+    const isEmailValid = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(
+      email
+    );
 
     if (passwordRef?.current?.value !== passwordConfirmRef?.current?.value) {
       return setError("Passwords do not match");
     }
 
     setError("");
-    try {
-      await createUser(email, password);
-    } catch (err) {
-      alert(err);
-    }
 
-    navigate("/home");
+    if (isEmailValid) {
+      try {
+        await createUser(email, password);
+      } catch (err) {
+        alert(err);
+      }
+      navigate("/home");
+    }
+    return setError("Email is not valid");
   };
 
-  const handleShowForm = () => {
+  const handlerShowForm = () => {
     setShowForm(!showForm);
   };
 
@@ -122,7 +129,7 @@ export const SignUp = () => {
       <FontAwesomeIcon icon={faLock} className={lockIcon} />
       <h2>Sign up</h2>
       {error && <p className={errorStyle}>{error}</p>}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handlerSubmit}>
         <input
           type="text"
           onChange={(e) => setName(e.target.value)}
@@ -156,7 +163,7 @@ export const SignUp = () => {
       </form>
       <div className={signUpBtnBox}> </div>
       <div>
-        <button onClick={handleShowForm}>ADD BIO</button>
+        <button onClick={handlerShowForm}>ADD BIO</button>
       </div>
       <div className={alreadyHaveAcc}>
         <Link to="/"> Already have an account? Sign in</Link>

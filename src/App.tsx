@@ -4,6 +4,13 @@ import { SignUp } from "./components/Auth/SignUp";
 import { Header } from "./components/Header/Header";
 import { Home } from "./components/Home/Home";
 import { useEffect, useState } from "react";
+import { auth, db } from "./components/data/firebaseConfig";
+import { Explore } from "./components/Body/Explore";
+import { Profile } from "./components/Body/Profile/Profile";
+import { setDoc, doc, getDocs } from "firebase/firestore";
+import { AuthContext } from "./components/Context/AuthContext";
+import { ForgotPassword } from "./components/Auth/ForgotPassword";
+import firebase from "firebase/compat/app";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -12,32 +19,58 @@ import {
   sendPasswordResetEmail,
   updateProfile,
 } from "firebase/auth";
-import { auth, db } from "./components/data/firebaseConfig";
-import { Explore } from "./components/Body/Explore";
-import { Profile } from "./components/Body/Profile/Profile";
-import { setDoc, doc } from "firebase/firestore";
-import {
-  IComments,
-  IFollowers,
-  IMessage,
-  IPost,
-  IUser,
-} from "./components/Interfaces/Interfaces";
-import { AuthContext } from "./components/Context/AuthContext";
-import { ForgotPassword } from "./components/Auth/ForgotPassword";
-import firebase from "firebase/compat/app";
+import { IFollow, IPosts, IUsers } from "./components/Interfaces/Interfaces";
 
 const App = () => {
+  // Nisam znao rijesiti ANY, ima u interfaces ICurrentUser
   const [user, setUser] = useState<any>({});
-  const [userInfo, setUserInfo] = useState<IUser[]>([]);
+  const [users, setUsers] = useState<IUsers[]>([]);
   const [bio, setBio] = useState<{}>({});
-  const [storingPost, setStoringPost] = useState<IPost[]>([]);
-  const [textPost, setTextPost] = useState<string>("");
-  const [postComment, setPostComment] = useState<IComments[]>([]);
+  const [posts, setPosts] = useState<IPosts[]>([]);
+  const [textComment, setTextComment] = useState<string>("");
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
-  const [messages, setMessages] = useState<IMessage[]>([]);
-  const [followers, setFollowers] = useState<IFollowers[]>([]);
+  const [following, setFollowing] = useState<IFollow[]>([]);
+  const [followers, setFollowers] = useState<IFollow[]>([]);
+  const [liked, setLiked] = useState<string[]>([]);
+
+  useEffect(() => {
+    const getFollowingsInfo = async () => {
+      const followingsCollectionRef = db.collection(
+        `users/${auth.currentUser?.uid}/followings`
+      );
+      const dataFollowings = await getDocs(followingsCollectionRef);
+      try {
+        setFollowing(
+          dataFollowings.docs.map((doc) => {
+            return { ...doc.data(), id: doc.id } as IFollow;
+          })
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    getFollowingsInfo();
+  }, [user, users]);
+
+  useEffect(() => {
+    const getFollowersInfo = async () => {
+      const followersCollectionRef = db.collection(
+        `users/${auth.currentUser?.uid}/followers`
+      );
+      const dataFollowers = await getDocs(followersCollectionRef);
+      try {
+        setFollowers(
+          dataFollowers.docs.map((doc) => {
+            return { ...doc.data(), id: doc.id } as IFollow;
+          })
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    getFollowersInfo();
+  }, [user, users]);
 
   const createUser = async (email: string, password: string) => {
     await createUserWithEmailAndPassword(auth, email, password);
@@ -50,8 +83,8 @@ const App = () => {
       });
 
       try {
-        await setDoc(doc(db, "users", `${auth.currentUser.uid}`), {
-          userEmail: auth.currentUser.email,
+        await setDoc(doc(db, "users", `${auth.currentUser?.uid}`), {
+          userEmail: auth.currentUser?.email,
           userName: name,
           userBio: bio,
           userPhoto:
@@ -75,10 +108,10 @@ const App = () => {
       setUser(currentUser);
     });
     unsubsrcibe();
-  }, [userInfo]);
+  }, [users]);
 
   const logOut = () => {
-    return signOut(auth), setStoringPost([]), setUserInfo([]), setUser({});
+    return signOut(auth);
   };
 
   const passwordReset = (email: string) => {
@@ -91,26 +124,27 @@ const App = () => {
         createUser,
         passwordReset,
         user,
+        setUser,
         logOut,
         signIn,
         name,
         setName,
         email,
         setEmail,
-        userInfo,
-        setUserInfo,
+        users,
+        setUsers,
         bio,
         setBio,
-        messages,
-        setMessages,
-        storingPost,
-        setStoringPost,
-        textPost,
-        setTextPost,
-        postComment,
-        setPostComment,
+        posts,
+        setPosts,
+        following,
+        setFollowing,
         followers,
         setFollowers,
+        textComment,
+        setTextComment,
+        liked,
+        setLiked,
       }}
     >
       <div>

@@ -88,7 +88,7 @@ export const SignIn = () => {
   const { signIn, email, setEmail } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.SyntheticEvent) => {
+  const handlerSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     setError("");
@@ -99,7 +99,6 @@ export const SignIn = () => {
       setError("fail");
     }
   };
-
   return (
     <div className={signInContainer}>
       <FontAwesomeIcon icon={faLock} className={lockIcon} />
@@ -108,7 +107,7 @@ export const SignIn = () => {
         <p className={errorSignIn}>Incorrect Data, Please Try Again!</p>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handlerSubmit}>
         <input
           type="email"
           onChange={(e) => setEmail(e.target.value)}

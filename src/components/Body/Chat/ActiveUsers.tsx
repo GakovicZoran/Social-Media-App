@@ -1,11 +1,10 @@
 import { css } from "@emotion/css";
 import { useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../Context/AuthContext";
-import { IUser } from "../../Interfaces/Interfaces";
+import { IUsers } from "../../Interfaces/Interfaces";
 
-const usersRoomsContainer = css`
-  width: 30%;
+const usersChatContainer = css`
+  width: 35%;
   border-right: 2px solid black;
 `;
 
@@ -27,26 +26,28 @@ const usersList = css`
   }
 `;
 
-export const ActiveUsers = () => {
-  const { userInfo, user } = useContext(AuthContext);
-  const navigate = useNavigate();
+const currentChat = css`
+  cursor: pointer;
+`;
+
+export const ActiveUsers = ({
+  onUserClicked,
+}: {
+  onUserClicked: (userId: string) => void;
+}) => {
+  const { users, user: chatUser } = useContext(AuthContext);
 
   return (
-    <div className={usersRoomsContainer}>
-      {userInfo?.map((users: IUser) => {
-        return users.id !== user?.uid ? (
-          <ul key={users.id} className={usersList}>
-            <Link
-              to={users.id}
-              onClick={() => {
-                navigate(`${users.id}`);
-              }}
-            >
+    <div className={usersChatContainer}>
+      {users?.map((user: IUsers) => {
+        return user.id !== chatUser?.uid ? (
+          <ul key={user.id} className={usersList}>
+            <a onClick={() => onUserClicked(user.id)} className={currentChat}>
               <li>
-                <img src={users.userPhoto} alt="Loading..." />
-                <h4>{users.userName}</h4>
+                <img src={user.userPhoto} alt="Loading..." />
+                <h4>{user.userName}</h4>
               </li>
-            </Link>
+            </a>
           </ul>
         ) : null;
       })}

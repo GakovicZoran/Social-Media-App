@@ -18,10 +18,11 @@ const openModalBtn = css`
 `;
 
 interface IEditPost {
-  id: string;
+  index: number;
+  postID: string;
 }
 
-export const EditComment = ({ id }: IEditPost) => {
+export const EditComment = ({ index, postID }: IEditPost) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const toggleModal = () => setIsModalOpen(true);
 
@@ -30,7 +31,13 @@ export const EditComment = ({ id }: IEditPost) => {
       <button onClick={toggleModal} className={openModalBtn}>
         <FontAwesomeIcon icon={faEdit} />
       </button>
-      {isModalOpen && <ModalEditComment closeModal={setIsModalOpen} id={id} />}
+      {isModalOpen && (
+        <ModalEditComment
+          closeModal={setIsModalOpen}
+          index={index}
+          postID={postID}
+        />
+      )}
     </div>
   );
 };

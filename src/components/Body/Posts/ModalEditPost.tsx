@@ -1,11 +1,11 @@
 import { css } from "@emotion/css";
 import { useState } from "react";
-import { auth, db } from "../../data/firebaseConfig";
+import { db } from "../../data/firebaseConfig";
 
 const modalPostContainer = css`
   position: absolute;
   width: 30%;
-  height: 35%;
+  height: 20%;
   left: 39%;
   top: 55%;
   border: 1px solid black;
@@ -71,18 +71,15 @@ interface IModalProp {
 export const ModalEditPost = ({ closeModal, id }: IModalProp) => {
   const [updatedTextPost, setUpdatedTextPost] = useState<string>("");
 
-  const handleCommentEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handlerCommentEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setUpdatedTextPost(e.target.value);
   };
 
-  const handleEdit = async (id: string) => {
+  const handlerEdit = async (id: string) => {
     if (updatedTextPost === "") return;
-    await db
-      .collection(`/users/${auth?.currentUser?.uid}/post`)
-      .doc(id)
-      .update({
-        userPost: updatedTextPost,
-      });
+    await db.collection(`posts`).doc(id).update({
+      userPost: updatedTextPost,
+    });
     closeModal(false);
   };
 
@@ -95,7 +92,7 @@ export const ModalEditPost = ({ closeModal, id }: IModalProp) => {
       <div className={editText}>
         <p>New Text:</p>
         <textarea
-          onChange={handleCommentEdit}
+          onChange={handlerCommentEdit}
           value={updatedTextPost}
           className={editPostInput}
           required
@@ -105,7 +102,7 @@ export const ModalEditPost = ({ closeModal, id }: IModalProp) => {
         <button onClick={() => closeModal(false)} className={btnCloseModalPost}>
           Close
         </button>
-        <button onClick={() => handleEdit(id)} className={btnSaveModalPost}>
+        <button onClick={() => handlerEdit(id)} className={btnSaveModalPost}>
           Save Changes
         </button>
       </div>

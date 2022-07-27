@@ -1,32 +1,47 @@
 import { css } from "@emotion/css";
-import { useState } from "react";
+import { useContext } from "react";
+import { AuthContext } from "../../../Context/AuthContext";
 import { auth, db } from "../../../data/firebaseConfig";
 
 const modalAboutContainer = css`
   position: absolute;
-  width: 30%;
-  height: 35%;
+  width: 25%;
+  height: 40%;
   left: 39%;
   border: 1px solid black;
   background-color: white;
   padding-bottom: 80px;
+  text-align: center;
   & h4 {
     margin: 0;
     padding: 20px;
     font-size: 20px;
     border-bottom: 1px dotted black;
+    text-align: center;
+  }
+
+  & input {
+    width: 60%;
+    height: 20px;
+    padding: 10px 8px;
+    font-size: 18px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    border: 1px solid #bdbbbb;
   }
 `;
 
 const btnCloseModal = css`
   position: absolute;
-  top: 0;
-  right: 0;
-  background: none;
+  top: 5px;
+  right: 5px;
   border: none;
   cursor: pointer;
-  font-size: 30px;
   gap: 50px;
+  background-color: #ac2525 !important;
+  border-radius: 5px;
+  color: white;
+  padding: 5px 10px;
 `;
 
 const editText = css`
@@ -37,26 +52,46 @@ const editText = css`
 const saveModalChange = css`
   display: flex;
   justify-content: flex-end;
+  margin-top: 50px;
+
+  & button {
+    border: none;
+    font-size: 17px;
+    color: white;
+    border-radius: 5px;
+    padding: 5px 7px;
+    cursor: pointer;
+    margin-right: 10px;
+  }
 `;
 
+const btnSave = css`
+  background-color: #007bff !important;
+`;
+
+const btnClose = css`
+  background-color: #ac2525 !important; ;
+`;
 interface IModalProp {
   closeModal: (active: boolean) => void;
 }
 
 export const AboutModalEdit = ({ closeModal }: IModalProp) => {
-  const [updatedBio, setUpdatedBio] = useState<{}>({});
+  const { bio, setBio } = useContext(AuthContext);
 
-  const handleUpdatedBio = (e: { target: { value: string; name: string } }) => {
-    const value = e.target.value;
-    setUpdatedBio({
-      ...updatedBio,
+  const handlerUpdatedBio = (e: {
+    target: { value: string; name: string };
+  }) => {
+    let value = e.target.value;
+    setBio({
+      ...bio,
       [e.target.name]: value,
     });
   };
 
-  const handleEdit = async () => {
-    await db.collection(`/users/`).doc(`${auth?.currentUser?.uid}`).update({
-      userBio: updatedBio,
+  const handlerEdit = async () => {
+    await db.collection(`/users/`).doc(`${auth.currentUser?.uid}`).update({
+      userBio: bio,
     });
     closeModal(false);
   };
@@ -73,32 +108,36 @@ export const AboutModalEdit = ({ closeModal }: IModalProp) => {
           <input
             type="text"
             placeholder="Your Gender"
-            onChange={handleUpdatedBio}
+            onChange={handlerUpdatedBio}
             name="gender"
           />
           <input
             type="number"
             placeholder="Your Age"
-            onChange={handleUpdatedBio}
+            onChange={handlerUpdatedBio}
             name="age"
           />
           <input
             type="number"
             placeholder="Your Phone"
-            onChange={handleUpdatedBio}
+            onChange={handlerUpdatedBio}
             name="phoneNumber"
           />
           <input
             type="date"
             placeholder="Your Date Of Birth"
-            onChange={handleUpdatedBio}
+            onChange={handlerUpdatedBio}
             name="birthDate"
           />
         </form>
       </div>
       <div className={saveModalChange}>
-        <button onClick={() => closeModal(false)}>Close</button>
-        <button onClick={handleEdit}>Save Changes</button>
+        <button onClick={() => closeModal(false)} className={btnSave}>
+          Close
+        </button>
+        <button onClick={handlerEdit} className={btnClose}>
+          Save Changes
+        </button>
       </div>
     </div>
   );

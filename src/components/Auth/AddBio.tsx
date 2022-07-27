@@ -9,7 +9,7 @@ const bioContainer = css`
 export const AddBio = () => {
   const { bio, setBio } = useContext(AuthContext);
 
-  const handleUserBio = (e: { target: { value: string; name: string } }) => {
+  const handlerUserBio = (e: { target: { value: string; name: string } }) => {
     const value = e.target.value;
     setBio({
       ...bio,
@@ -21,30 +21,30 @@ export const AddBio = () => {
     <div className={bioContainer}>
       <h4>All fields are optional!</h4>
       <input
-        onChange={handleUserBio}
+        onChange={handlerUserBio}
         type="text"
         placeholder="Type Gender: Male / Female"
         name="gender"
       ></input>
       <input
-        onChange={handleUserBio}
+        onChange={handlerUserBio}
         type="number"
         placeholder="Type Age:"
         name="age"
       ></input>
 
       <input
-        onChange={handleUserBio}
+        onChange={handlerUserBio}
         type="number"
         placeholder="Type Phone Number:"
         name="phoneNumber"
       ></input>
 
       <input
-        onChange={handleUserBio}
+        onChange={handlerUserBio}
         type="date"
         placeholder="Type Birth Year: "
-        name="birthDate"
+        name="birthYear"
       ></input>
     </div>
   );

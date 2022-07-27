@@ -1,9 +1,14 @@
-import { getAuth } from "firebase/auth";
+import {
+  browserSessionPersistence,
+  getAuth,
+  setPersistence,
+} from "firebase/auth";
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
 import "firebase/compat/database";
 import { getStorage } from "firebase/storage";
 const firebaseConfig = firebase.initializeApp({
+  //////////// Ne radi mi kada ukljucim env iz nekoga razloga pa da znas! //////////////
   apiKey: "AIzaSyAswgHbH4UHlR7u2scfjlrDx-VBL4eCfsk",
   authDomain: "social-media-app-a1cb2.firebaseapp.com",
   projectId: "social-media-app-a1cb2",
@@ -14,4 +19,8 @@ const firebaseConfig = firebase.initializeApp({
 
 export const db = firebaseConfig.firestore();
 export const auth = getAuth();
+setPersistence(auth, browserSessionPersistence).catch((error) => {
+  console.log(error);
+});
+
 export const storage = getStorage();

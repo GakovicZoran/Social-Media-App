@@ -1,16 +1,23 @@
 import { css } from "@emotion/css";
 import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../../Context/AuthContext";
-import { Post } from "../Posts/Post";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCamera } from "@fortawesome/free-solid-svg-icons";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { About } from "./AboutUser/About";
 import { updateProfile } from "firebase/auth";
-import { ICurrentUser, IFile, IUser } from "../../Interfaces/Interfaces";
+import {
+  ICurrentUser,
+  IFile,
+  IFollow,
+  IUsers,
+} from "../../Interfaces/Interfaces";
 import { useParams } from "react-router-dom";
 import { db, auth, storage } from "../../data/firebaseConfig";
+import { Following } from "./Following";
 import { Followers } from "./Followers";
+import { getDocs } from "firebase/firestore";
+import { ProfilePosts } from "./ProfilePosts";
 
 const bannerBox = css`
   position: relative;
@@ -74,7 +81,8 @@ const profilePost = css`
   overflow-y: scroll;
   overflow-x: hidden;
   height: 95vh;
-  width: 1000px;
+  width: 1500px;
+  margin-top: 50px;
 `;
 
 const addProfilePhoto = css`
@@ -126,6 +134,16 @@ const addCoverPhoto = css`
     font-size: 20px;
     cursor: pointer;
   }
+
+  input[type="file"] {
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    cursor: pointer;
+  }
 `;
 
 const profileNav = css`
@@ -152,8 +170,71 @@ export const Profile = () => {
   const [profileImage, setProfileImage] = useState<IFile | null>(null);
   const [coverImage, setCoverImage] = useState<IFile | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const { user, userInfo } = useContext(AuthContext);
+  const { user, setFollowers, setFollowing, followers, following } =
+    useContext(AuthContext);
+  const [userDATA, setUserDATA] = useState<IUsers | null>(null);
   const { id } = useParams();
+
+  useEffect(() => {
+    const getFollowingsInfo = async () => {
+      const followingsCollectionRef = db.collection(
+        `users/${auth?.currentUser?.uid}/followings`
+      );
+      const dataFollowings = await getDocs(followingsCollectionRef);
+      try {
+        setFollowing(
+          dataFollowings.docs.map((doc) => {
+            return { ...doc.data(), id: doc.id } as IFollow;
+          })
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    getFollowingsInfo();
+  }, [user]);
+
+  useEffect(() => {
+    const getFollowersInfo = async () => {
+      const followersCollectionRef = db.collection(
+        `users/${auth.currentUser?.uid}/followers`
+      );
+      const dataFollowers = await getDocs(followersCollectionRef);
+      try {
+        setFollowers(
+          dataFollowers.docs.map((doc) => {
+            return { ...doc.data(), id: doc.id } as IFollow;
+          })
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    getFollowersInfo();
+  }, [user]);
+
+  useEffect(() => {
+    const fetchUserDATA = async () => {
+      const userCollectionRef = db.collection("users");
+      const dataUser = await getDocs(userCollectionRef);
+
+      dataUser.docs.forEach((doc) => {
+        const data = doc.data();
+        if (doc.id === id) {
+          setUserDATA({ ...data, id: doc.id } as IUsers);
+        }
+      });
+    };
+    fetchUserDATA();
+  }, [id]);
+
+  useEffect(() => {
+    if (profileImage) return handleUploadProfileImage();
+  }, [profileImage]);
+
+  useEffect(() => {
+    if (coverImage) return handleUploadCoverImage();
+  }, [coverImage]);
 
   // Profile Image //
   const uploadProfileImg = async (
@@ -176,12 +257,16 @@ export const Profile = () => {
       updateProfile(auth.currentUser, {
         photoURL,
       });
+      if (userDATA) {
+        userDATA.userPhoto = photoURL;
+      }
     }
 
     setLoading(false);
     alert("Uploaded file!");
   };
 
+  // Nisam znao rijesiti ANY
   const handleImageChange = (e: any) => {
     if (e.target.files[0]) {
       setProfileImage(e.target.files[0]);
@@ -196,10 +281,6 @@ export const Profile = () => {
     );
     setProfileImage(null);
   };
-
-  useEffect(() => {
-    if (profileImage) return handleUploadProfileImage();
-  }, [profileImage]);
 
   // Cover Image //
   const uploadCoverImg = async (
@@ -222,12 +303,16 @@ export const Profile = () => {
       await db.collection("users").doc(`${auth.currentUser.uid}`).update({
         userCoverPhoto: photoCoverURL,
       });
+      if (userDATA) {
+        userDATA.userCoverPhoto = photoCoverURL;
+      }
     }
 
     setLoading(false);
     alert("Uploaded Cover Image!");
   };
 
+  // Nisam znao rijesiti ANY
   const handleCoverImageChange = (e: any) => {
     if (e.target.files[0]) {
       setCoverImage(e.target.files[0]);
@@ -243,66 +328,53 @@ export const Profile = () => {
     setCoverImage(null);
   };
 
+  if (!userDATA) {
+    return <div>loading...</div>;
+  }
+
   return (
     <div>
       <div className={bannerBox}>
-        {userInfo
-          .filter((users: IUser) => users.id === id)
-          .map((eachUser: IUser) => {
-            return (
-              <div key={eachUser.id} className={bannerImgBox}>
-                <img
-                  className={bannerImg}
-                  src={`${eachUser.userCoverPhoto}?${new Date().getTime()}`}
-                  alt="Banner Loading.."
-                />
-                {eachUser.id === user.uid ? (
-                  <div className={addCoverPhoto}>
-                    <input type="file" onChange={handleCoverImageChange} />
-                    {coverImage && (
-                      <button
-                        disabled={loading || !coverImage}
-                        onClick={handleUploadCoverImage}
-                      >
-                        <FontAwesomeIcon icon={faCamera} />
-                      </button>
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            );
-          })}
+        <div className={bannerImgBox}>
+          <img
+            className={bannerImg}
+            src={`${userDATA.userCoverPhoto}?${new Date().getTime()}`}
+            alt="Banner Loading.."
+          />
+          {userDATA.id === user.uid ? (
+            <div className={addCoverPhoto}>
+              <input type="file" onChange={handleCoverImageChange} />
+              <button
+                disabled={loading || !coverImage}
+                onClick={handleUploadCoverImage}
+              >
+                <FontAwesomeIcon icon={faCamera} />
+              </button>
+            </div>
+          ) : null}
+        </div>
 
-        {userInfo
-          .filter((users: IUser) => users.id === id)
-          .map((eachUser: IUser) => {
-            return (
-              <div key={eachUser.id} className={profileBox}>
-                <div className={profileImgBox}>
-                  <img
-                    src={`${eachUser.userPhoto}?${new Date().getTime()}`}
-                    alt="Loading..."
-                    className={profileImg}
-                  />
-                  {eachUser.id === user.uid ? (
-                    <div className={addProfilePhoto}>
-                      <input type="file" onChange={handleImageChange} />
-                      <button
-                        disabled={loading || !profileImage}
-                        onClick={handleUploadProfileImage}
-                      >
-                        <FontAwesomeIcon
-                          icon={faCamera}
-                          className={profileImgIcon}
-                        />
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-                <p className={profileUserName}>{eachUser.userName}</p>
+        <div className={profileBox}>
+          <div className={profileImgBox}>
+            <img
+              src={`${userDATA.userPhoto}?${new Date().getTime()}`}
+              alt="Loading..."
+              className={profileImg}
+            />
+            {userDATA.id === user.uid ? (
+              <div className={addProfilePhoto}>
+                <input type="file" onChange={handleImageChange} />
+                <button
+                  disabled={loading || !profileImage}
+                  onClick={handleUploadProfileImage}
+                >
+                  <FontAwesomeIcon icon={faCamera} className={profileImgIcon} />
+                </button>
               </div>
-            );
-          })}
+            ) : null}
+          </div>
+          <p className={profileUserName}>{userDATA.userName}</p>
+        </div>
       </div>
 
       <div className={userInfoBox}>
@@ -360,11 +432,11 @@ export const Profile = () => {
           </div>
           {postRender ? (
             <div className={profilePost}>
-              <Post />
+              <ProfilePosts userDATA={userDATA} />
             </div>
           ) : null}
           {followersRender ? <div>{<Followers />}</div> : null}
-          {followingRender ? <div>Following</div> : null}
+          {followingRender ? <div>{<Following />}</div> : null}
           {aboutRender ? <About /> : null}
         </div>
       </div>
